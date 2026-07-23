@@ -1231,8 +1231,9 @@
   /* TODO: drop the real Kick channel URL here (used by every "watch it live" link) */
   const KICK_URL = "#";
 
-  /* TODO: replace with the real Whop / ConvertKit waitlist endpoint URL */
-  const WAITLIST_ENDPOINT = "https://placeholder.invalid/waitlist";
+  /* NOTE: WAITLIST_ENDPOINT lives directly above the waitlist form handler
+     near the bottom of this script — that's the one line to flip when the
+     permanent form backend is ready. */
 
   /* ---------- fx level: ?fx=low degrades, ?fx=off kills (same approach as the overlay) ---------- */
   const q = new URLSearchParams(location.search);
@@ -1629,9 +1630,27 @@
   }
 
   /* ==========================================================
-     Waitlist form
-     TODO: point WAITLIST_ENDPOINT (top of script) at the real
-     Whop / ConvertKit endpoint; until then submits are optimistic.
+     WAITLIST ENDPOINT  ——  the ONE line to flip for permanent signups.
+     ----------------------------------------------------------
+     Leave this "" (empty) → the form uses the zero-backend MAILTO
+     fallback below: on submit it opens the visitor's mail client with
+     a prefilled email to ladonte@ladonteprince.com (subject
+     "Rackhouse waitlist", body carries the entered address) so signups
+     still land in a real inbox with ZERO accounts and ZERO external
+     network requests (fully self-contained / CSP-safe).
+
+     Go permanent by pasting ONE POST URL from any form backend that
+     accepts JSON — Formspree, Whop, Tally, etc. — e.g.:
+         const WAITLIST_ENDPOINT = "https://formspree.io/f/abcdwxyz";
+     When non-empty the handler fetch-POSTs { email, source } as JSON to
+     that URL and shows success/failure. No other code changes needed.
+     ========================================================== */
+  const WAITLIST_ENDPOINT = "";
+
+  /* ==========================================================
+     Waitlist form handler
+       • WAITLIST_ENDPOINT set   → POST the email as JSON, show ok/err
+       • WAITLIST_ENDPOINT empty → mailto fallback (zero backend)
      ========================================================== */
   (function waitlist() {
     const form = document.getElementById("wl-form");
@@ -1639,6 +1658,25 @@
     const btn = document.getElementById("wl-btn");
     const status = document.getElementById("wl-status");
     if (!form) return;
+
+    const SOURCE = PRODUCT_NAME.toLowerCase().replace(/\s+/g, "-") + "-landing";
+    const btnSpan = btn.querySelector("span");
+
+    function celebrate() {
+      status.textContent = "You're on the list — check your inbox. 🔥";
+      status.className = "wl-status ok";
+      btnSpan.textContent = "You're in";
+      form.reset();
+      const r = btn.getBoundingClientRect();
+      domBurst(r.left + r.width / 2, r.top + r.height / 2);
+    }
+
+    function fail(msg) {
+      status.textContent = msg;
+      status.className = "wl-status err";
+      btn.disabled = false;
+      btnSpan.textContent = "Lock me in";
+    }
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -1649,24 +1687,39 @@
         return;
       }
       btn.disabled = true;
-      btn.querySelector("span").textContent = "Locking in…";
+      btnSpan.textContent = "Locking in…";
       status.textContent = "";
       status.className = "wl-status";
 
-      fetch(WAITLIST_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: val, source: PRODUCT_NAME.toLowerCase().replace(/\s+/g, "-") + "-landing" })
-      })
-        .catch(function () { /* placeholder endpoint: swallow the network error */ })
-        .then(function () {
-          status.textContent = "You're locked in. Watch your inbox. 🔥";
-          status.className = "wl-status ok";
-          btn.querySelector("span").textContent = "You're in";
-          form.reset();
-          const r = btn.getBoundingClientRect();
-          domBurst(r.left + r.width / 2, r.top + r.height / 2);
-        });
+      /* -------- PERMANENT path: POST to the configured endpoint -------- */
+      if (WAITLIST_ENDPOINT) {
+        fetch(WAITLIST_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ email: val, source: SOURCE })
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("bad status " + res.status);
+            celebrate();
+          })
+          .catch(function () {
+            fail("Couldn't reach the list — give it another shot in a sec.");
+          });
+        return;
+      }
+
+      /* -------- INTERIM path: zero-backend mailto capture --------
+         Opens the visitor's mail client with everything prefilled and
+         addressed to the founder. No external request, nothing to host. */
+      const subject = encodeURIComponent(PRODUCT_NAME + " waitlist");
+      const body = encodeURIComponent(
+        "Add me to the " + PRODUCT_NAME + " waitlist.\n\n" +
+        "Email: " + val + "\n\n" +
+        "Sent from the " + SOURCE + " page."
+      );
+      window.location.href =
+        "mailto:ladonte@ladonteprince.com?subject=" + subject + "&body=" + body;
+      celebrate();
     });
   })();
 
