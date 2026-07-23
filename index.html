@@ -682,16 +682,6 @@
     transform: rotate(var(--tilt, 0deg));
     transition: transform .45s var(--overshoot), box-shadow .35s ease, border-color .35s ease;
   }
-  .tier .t-banner {
-    display: block;
-    width: calc(100% + 3.4rem);
-    margin: -2.1rem -1.7rem 1.3rem;
-    height: 116px;
-    object-fit: cover;
-    border-radius: 19px 19px 0 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .tier.featured .t-banner { border-radius: 17px 17px 0 0; }
   .tier:hover { transform: rotate(0) translateY(-8px); box-shadow: 0 26px 56px rgba(0, 0, 0, .55); }
   .tier[data-accent="green"]:hover  { border-color: rgba(83, 252, 24, .5);  box-shadow: var(--glow-g), 0 26px 56px rgba(0,0,0,.55); }
   .tier[data-accent="purple"]:hover { border-color: rgba(145, 70, 255, .5); box-shadow: var(--glow-p), 0 26px 56px rgba(0,0,0,.55); }
@@ -1357,7 +1347,6 @@
       if (!t.featured) card.style.setProperty("--tilt", i === 0 ? "-.7deg" : ".7deg");
 
       let html = "";
-      if (t.image) html += '<img class="t-banner" src="' + t.image + '" alt="' + t.name + '" loading="lazy">';
       if (t.flag) html += '<span class="flag">' + t.flag + "</span>";
       html += '<div class="t-name">' + t.name + "</div>";
       html += '<div class="t-tag">' + t.tagline + "</div>";
