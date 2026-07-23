@@ -960,7 +960,7 @@
         <a href="#how">How</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
-        <a class="btn btn-primary btn-sm nav-cta" href="#waitlist"><span>Join waitlist</span></a>
+        <a class="btn btn-primary btn-sm nav-cta" href="https://whop.com/rackhouse-ff71/rackhouse-founding" target="_blank" rel="noopener"><span>Get Founding</span></a>
       </div>
     </div>
   </nav>
@@ -982,7 +982,7 @@
           You watch every move roll across your overlay. <strong>Chat watches it too.</strong>
         </p>
         <div class="hero-ctas reveal" style="--d:.24s">
-          <a class="btn btn-primary" id="hero-cta" href="#waitlist"><span>Join the waitlist</span></a>
+          <a class="btn btn-primary" id="hero-cta" href="https://whop.com/rackhouse-ff71/rackhouse-founding" target="_blank" rel="noopener"><span>Claim your founding seat</span></a>
           <!-- TODO: drop the real Kick channel URL into KICK_URL in the script below -->
           <a class="btn btn-ghost js-watch-live" href="#" target="_blank" rel="noopener"><span>&#9654;&#65038; Watch it live</span></a>
         </div>
@@ -1265,6 +1265,7 @@
     tiers: [
       {
         id: "founding",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-founding",
         name: "FOUNDING",
         tagline: "First 100 seats — locked for life",
         price: "$79",
@@ -1284,13 +1285,14 @@
       },
       {
         id: "core",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-core",
         name: "CORE",
         tagline: "The full swarm",
         price: "$129",
         period: "per month",
         accent: "purple",
         featured: false,
-        cta: "Join the waitlist",
+        cta: "Get Core",
         features: [
           "Everything in Founding",
           "Engine config packs — clipping, SaaS, voice, faceless",
@@ -1300,13 +1302,14 @@
       },
       {
         id: "operator",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-operator",
         name: "OPERATOR",
         tagline: "Run it like a business",
         price: "$249",
         period: "per month",
         accent: "green",
         featured: false,
-        cta: "Join the waitlist",
+        cta: "Get Operator",
         features: [
           "Everything in Core",
           "Multi-engine profiles — run several money engines side by side",
@@ -1333,7 +1336,7 @@
       html += '<div class="t-tag">' + t.tagline + "</div>";
       html += '<div class="t-price"><span class="t-amount">' + t.price + '</span><span class="t-period">' + t.period + "</span></div>";
       html += '<ul class="t-feats">' + t.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
-      html += '<a class="btn ' + (t.featured ? "btn-primary" : "btn-ghost") + '" href="#waitlist"><span>' + t.cta + "</span></a>";
+      html += '<a class="btn ' + (t.featured ? "btn-primary" : "btn-ghost") + '" href="' + t.checkout + '" target="_blank" rel="noopener"><span>' + t.cta + "</span></a>";
       card.innerHTML = html;
       grid.appendChild(card);
     });
