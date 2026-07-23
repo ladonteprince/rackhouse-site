@@ -1,0 +1,27 @@
+# Rackhouse
+
+> Rackhouse is an AI agent swarm for live streamers (Kick, Twitch, YouTube) that turns streams into money — "the house that stacks your racks." 12 specialized AI agents clip, caption, post, and hunt money moves in the background while you stream, sleep, or touch grass. Run it in Discord (no install, hosted compute, credit-based) or as a notarized macOS app (bring your own Claude account). It's demoed live on stream every night — the overlay IS the product.
+
+Rackhouse is a consumer product for streamers and creators (not a developer API). It runs four "money engines" — short-form clipping, digital products, affiliate/deal-making, and services/outreach — across a 12-agent swarm. There are two ways to run it:
+
+- **Discord (no Mac needed):** join the server and type slash commands; the swarm runs on Rackhouse's hosted compute, metered by credits. Lowest barrier to entry.
+- **macOS app:** a notarized menu-bar command center + OBS overlay; you bring your own Claude account (your compute, near-zero markup). For power users.
+
+## Get started
+- [Join the Rackhouse Discord](https://discord.gg/7vEnUYSx4Y): type a slash command, the swarm runs — no install, no Mac required.
+- [Rackhouse on Whop](https://whop.com/rackhouse-ff71/): plans, checkout, and the partner program.
+- [rackhouse.gg](https://rackhouse.gg): overview, live proof, pricing, and FAQ.
+
+## Pricing
+- **Discord (credit-metered, hosted compute):** Taster $12/mo (20 credits), Starter $29/mo (50), Grinder $59/mo (105), Boss $75/mo (135), plus one-time refill packs. 1 credit ≈ one agent run; a full clip is 10 credits.
+- **macOS (flat, bring-your-own-Claude):** Founding $79/mo (first 100 seats, price locked for life), Core $129/mo, Operator $249/mo.
+
+## Partner / affiliate program
+- [Become a partner](https://whop.com/rackhouse-ff71/): earn 30% commission on every sale you refer, and 40% recurring once you're a member — paid every month a referral stays subscribed. You share it; you don't have to sell it.
+
+## The 12 agents
+- **Clipper** — finds the money moments in VODs and cuts vertical clips.
+- **Captioner / Titler / Thumbnailer** — styled captions and hooks, algorithm-tuned titles, high-CTR thumbnails.
+- **Trend Scout / Poster / Repurposer** — trending sounds and formats, cross-platform scheduling, one stream into many posts.
+- **Engager / Moderator** — replies to comments and DMs, watches chat for spam and safety.
+- **Analyst / Deal Maker / Accountant** — reports what's working, drafts sponsor outreach, tracks revenue and payouts.
