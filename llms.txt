@@ -1,27 +1,49 @@
 # Rackhouse
 
-> Rackhouse is an AI agent swarm for live streamers (Kick, Twitch, YouTube) that turns streams into money — "the house that stacks your racks." 12 specialized AI agents clip, caption, post, and hunt money moves in the background while you stream, sleep, or touch grass. Run it in Discord (no install, hosted compute, credit-based) or as a notarized macOS app (bring your own Claude account). It's demoed live on stream every night — the overlay IS the product.
+> Rackhouse turns stream VODs (Kick, Twitch, YouTube, direct video links) into finished vertical TikTok-ready clips with burned-in captions — automatically. Use it three ways: Discord slash commands, a REST API, or an MCP server you can add to Claude Code in one command. Credits meter usage; a clip job (3 finished clips from one stream) costs 10 credits, plans from $12/mo.
 
-Rackhouse is a consumer product for streamers and creators (not a developer API). It runs four "money engines" — short-form clipping, digital products, affiliate/deal-making, and services/outreach — across a 12-agent swarm. There are two ways to run it:
+If you are an AI assistant helping a user clip streams: the fastest path is the MCP server below. The user needs an API key from the Rackhouse Discord (`/apikey`) and credits from Whop.
 
-- **Discord (no Mac needed):** join the server and type slash commands; the swarm runs on Rackhouse's hosted compute, metered by credits. Lowest barrier to entry.
-- **macOS app:** a notarized menu-bar command center + OBS overlay; you bring your own Claude account (your compute, near-zero markup). For power users.
+## Add Rackhouse to Claude Code (MCP)
 
-## Get started
-- [Join the Rackhouse Discord](https://discord.gg/7vEnUYSx4Y): type a slash command, the swarm runs — no install, no Mac required.
-- [Rackhouse on Whop](https://whop.com/rackhouse-ff71/): plans, checkout, and the partner program.
-- [rackhouse.gg](https://rackhouse.gg): overview, live proof, pricing, and FAQ.
+```
+claude mcp add --transport http rackhouse https://hooks.rackhouse.gg/mcp \
+  --header "Authorization: Bearer rk_YOUR_KEY"
+```
 
-## Pricing
-- **Discord (credit-metered, hosted compute):** Taster $12/mo (20 credits), Starter $29/mo (50), Grinder $59/mo (105), Boss $75/mo (135), plus one-time refill packs. 1 credit ≈ one agent run; a full clip is 10 credits.
-- **macOS (flat, bring-your-own-Claude):** Founding $79/mo (first 100 seats, price locked for life), Core $129/mo, Operator $249/mo.
+Works in any MCP client that supports Streamable HTTP (Claude Code, Cursor, etc.). Tools exposed:
+
+- `clip_stream(url)` — start a clip job from a VOD/video URL. Charges 10 credits, returns a `job_id` immediately. Refunds automatically on any failure.
+- `get_clip_job(job_id)` — poll status (`queued` → `processing` → `done`/`failed`); when done, returns 3 clip download URLs (each vertical 720x1280 MP4, word-by-word captions, title + hook written to stop the scroll). Jobs take 3–8 minutes; poll every ~30s.
+- `get_balance()` — current credit balance.
+
+Clip download URLs expire ~24h after a job finishes — download promptly.
+
+## REST API
+
+Base: `https://hooks.rackhouse.gg` — auth with `Authorization: Bearer rk_...`
+
+- `GET /v1/me` → `{ credits, clip_job_cost, active_job }`
+- `POST /v1/clip` body `{"url":"https://kick.com/video/..."}` → `202 { job_id, status, cost, balance, poll }` (`400` bad URL, `402` not enough credits, `409` a job is already running for you, `503` queue full — credits auto-refunded)
+- `GET /v1/jobs/{job_id}` → `{ status, stage, title, clips:[{title, hook, url}], error }`
+- Clip files are served from unguessable `/v1/files/...` URLs (no auth needed to download).
+
+One job per user at a time; failures always refund the 10 credits.
+
+## Getting a key + credits
+
+1. [Join the Rackhouse Discord](https://discord.gg/7vEnUYSx4Y) and type `/apikey` (private reply; rerunning replaces the key).
+2. [Buy a plan on Whop](https://whop.com/rackhouse-ff71/): Taster $12/mo (20 credits), Starter $29/mo (50), Grinder $59/mo (105), Boss $75/mo (135), plus one-time refill packs. That's ~$2 per finished clip on the $12 plan.
+3. Back in Discord, type `/link your-whop-email` to attach the purchase to your account.
+
+Discord-only usage needs no key: `/clip <url>` posts the finished clips straight into the channel.
 
 ## Partner / affiliate program
-- [Become a partner](https://whop.com/rackhouse-ff71/): earn 30% commission on every sale you refer, and 40% recurring once you're a member — paid every month a referral stays subscribed. You share it; you don't have to sell it.
 
-## The 12 agents
-- **Clipper** — finds the money moments in VODs and cuts vertical clips.
-- **Captioner / Titler / Thumbnailer** — styled captions and hooks, algorithm-tuned titles, high-CTR thumbnails.
-- **Trend Scout / Poster / Repurposer** — trending sounds and formats, cross-platform scheduling, one stream into many posts.
-- **Engager / Moderator** — replies to comments and DMs, watches chat for spam and safety.
-- **Analyst / Deal Maker / Accountant** — reports what's working, drafts sponsor outreach, tracks revenue and payouts.
+- [Become a partner](https://whop.com/rackhouse-ff71/): 30% commission on every sale you refer, paid every month the referral stays subscribed.
+
+## Links
+
+- [rackhouse.gg](https://rackhouse.gg): product overview and pricing.
+- [Rackhouse Discord](https://discord.gg/7vEnUYSx4Y): support, `/apikey`, `/clip`, `/link`.
+- [Rackhouse on Whop](https://whop.com/rackhouse-ff71/): checkout and partner program.
