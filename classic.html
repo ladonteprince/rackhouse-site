@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Rackhouse — the house that stacks your racks. The AI agent swarm you watch on my stream. 12 specialized agents, OBS overlay. Runs in Discord or on your Mac.">
+<title>Rackhouse — the house that stacks your racks</title>
+<!-- Social share (Open Graph + Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rackhouse.gg/">
+<meta property="og:title" content="Rackhouse — the house that stacks your racks">
+<meta property="og:description" content="The AI agent swarm you watch on my stream. 12 agents clipping, shipping, posting, and hunting money moves while you stream, sleep, or touch grass. Runs in Discord — or on your Mac.">
+<meta property="og:image" content="https://rackhouse.gg/assets/og-rackhouse.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="800">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rackhouse — the house that stacks your racks">
+<meta name="twitter:description" content="The AI agent swarm you watch on my stream. Your racks stack while you're away.">
+<meta name="twitter:image" content="https://rackhouse.gg/assets/og-rackhouse.jpg">
+<meta name="theme-color" content="#0a0a0f">
+<!-- ============================================================
+     Fully self-contained landing page. Zero external requests.
+     Inline CSS + JS only. System fonts styled aggressively.
+     Rebrand: change PRODUCT_NAME once at the top of the script.
+     ============================================================ -->
+<style>
+  /* ========== reset ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  img, canvas, svg { display: block; max-width: 100%; }
+  button, input { font: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+
+  /* ========== tokens ========== */
+  :root {
+    --bg:      #0a0a0f;
+    --bg2:     #0e0e17;
+    --panel:   #10101c;
+    --green:   #53fc18;
+    --green-d: #2f9e0c;
+    --purple:  #9146ff;
+    --purple-l:#b07dff;
+    --white:   #f4f6ff;
+    --dim:     rgba(226, 232, 240, .62);
+    --dimmer:  rgba(226, 232, 240, .38);
+    --line:    rgba(255, 255, 255, .09);
+
+    --display: "Avenir Next Condensed", "Helvetica Neue", "Arial Narrow", Impact, system-ui, sans-serif;
+    --body:    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    --overshoot: cubic-bezier(.34, 1.56, .64, 1);
+    --snap:      cubic-bezier(.21, .9, .35, 1);
+
+    --glow-g: 0 0 12px rgba(83,252,24,.55), 0 0 34px rgba(83,252,24,.30), 0 0 80px rgba(83,252,24,.14);
+    --glow-p: 0 0 12px rgba(145,70,255,.55), 0 0 34px rgba(145,70,255,.30), 0 0 80px rgba(145,70,255,.14);
+  }
+
+  @property --ga {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  html, body { background: var(--bg); color: var(--white); }
+  body {
+    font-family: var(--body);
+    line-height: 1.55;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* ambient corner glows for the whole page */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 600px at 8% -5%,  rgba(83, 252, 24, .07), transparent 60%),
+      radial-gradient(900px 600px at 96% 12%, rgba(145, 70, 255, .10), transparent 60%),
+      radial-gradient(1100px 700px at 50% 115%, rgba(145, 70, 255, .07), transparent 62%);
+  }
+
+  ::selection { background: var(--green); color: #06120a; }
+
+  /* ========== type ========== */
+  .display {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    font-stretch: condensed;
+    text-transform: uppercase;
+    letter-spacing: .005em;
+    line-height: .94;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: clamp(.66rem, 1.4vw, .78rem);
+    font-weight: 700;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(83, 252, 24, .5);
+  }
+  .eyebrow.purple { color: var(--purple-l); text-shadow: 0 0 12px rgba(145, 70, 255, .55); }
+
+  .grad-text {
+    background: linear-gradient(100deg, var(--green) 5%, #7dff4a 30%, var(--purple-l) 68%, var(--purple) 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ========== glitch (used sparingly) ========== */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+  }
+  .glitch.glitching::before {
+    opacity: .85;
+    color: var(--green);
+    -webkit-text-fill-color: var(--green);
+    animation: glitchA .34s steps(2, end) both;
+  }
+  .glitch.glitching::after {
+    opacity: .85;
+    color: var(--purple);
+    -webkit-text-fill-color: var(--purple);
+    animation: glitchB .34s steps(2, end) both;
+  }
+  @keyframes glitchA {
+    0%   { transform: translate(-4px, -2px); clip-path: inset(12% 0 62% 0); }
+    40%  { transform: translate(3px, 1px);   clip-path: inset(48% 0 22% 0); }
+    80%  { transform: translate(-2px, 0);    clip-path: inset(70% 0 8% 0); }
+    100% { transform: translate(0, 0);       clip-path: inset(30% 0 48% 0); opacity: 0; }
+  }
+  @keyframes glitchB {
+    0%   { transform: translate(4px, 2px);  clip-path: inset(58% 0 16% 0); }
+    40%  { transform: translate(-3px, 0);   clip-path: inset(10% 0 74% 0); }
+    80%  { transform: translate(2px, -1px); clip-path: inset(36% 0 40% 0); }
+    100% { transform: translate(0, 0);      clip-path: inset(64% 0 20% 0); opacity: 0; }
+  }
+
+  /* ========== animated gradient border ========== */
+  .gborder {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    background:
+      linear-gradient(var(--panel), var(--panel)) padding-box,
+      conic-gradient(from var(--ga, 0deg), var(--green), var(--purple) 32%, rgba(255,255,255,.14) 55%, var(--purple) 74%, var(--green)) border-box;
+    animation: spinBorder 5.5s linear infinite;
+  }
+  @keyframes spinBorder { to { --ga: 360deg; } }
+
+  /* ========== reveal-on-scroll (overshoot entrance) ========== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(34px) scale(.97);
+    transition:
+      opacity .55s ease var(--d, 0s),
+      transform .75s var(--overshoot) var(--d, 0s);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ========== layout ========== */
+  .wrap { width: min(1120px, calc(100% - 2.5rem)); margin: 0 auto; }
+  section { padding: clamp(4rem, 9vw, 7rem) 0; position: relative; }
+  .sec-head { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+  .sec-head h2 {
+    font-size: clamp(2.1rem, 6vw, 3.8rem);
+    margin-top: .55rem;
+  }
+
+  /* ========== nav ========== */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    background: rgba(10, 10, 15, .72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    height: 60px;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 1.06rem;
+    white-space: nowrap;
+  }
+  .logo .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: var(--glow-g);
+    animation: pulseDot 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%      { transform: scale(1.35); opacity: .75; }
+  }
+  .nav-links {
+    display: flex;
+    gap: 1.35rem;
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .nav-links a { transition: color .2s, text-shadow .2s; }
+  .nav-links a:hover { color: var(--green); text-shadow: 0 0 10px rgba(83,252,24,.6); }
+  .nav-cta { margin-left: 1rem; }
+
+  /* ========== buttons ========== */
+  .btn {
+    display: inline-block;
+    position: relative;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border: 0;
+    cursor: pointer;
+    transform: skewX(-7deg);
+    transition: transform .32s var(--overshoot), box-shadow .32s ease, filter .2s ease;
+    will-change: transform;
+  }
+  .btn > span { display: inline-block; transform: skewX(7deg); }
+  .btn-primary {
+    background: var(--green);
+    color: #06120a;
+    font-size: clamp(1rem, 2.4vw, 1.25rem);
+    padding: .95em 1.9em;
+    border-radius: 10px;
+    box-shadow: var(--glow-g), 0 14px 34px rgba(0, 0, 0, .5);
+  }
+  .btn-primary:hover {
+    transform: skewX(-7deg) translateY(-3px) scale(1.04);
+    box-shadow: 0 0 18px rgba(83,252,24,.8), 0 0 54px rgba(83,252,24,.42), 0 0 110px rgba(83,252,24,.2), 0 18px 40px rgba(0,0,0,.55);
+  }
+  .btn-primary:active { transform: skewX(-7deg) translateY(1px) scale(.97); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--white);
+    font-size: clamp(.92rem, 2vw, 1.05rem);
+    padding: .9em 1.7em;
+    border-radius: 10px;
+    border: 2px solid var(--purple);
+    box-shadow: var(--glow-p), inset 0 0 18px rgba(145, 70, 255, .12);
+  }
+  .btn-ghost:hover {
+    transform: skewX(-7deg) translateY(-3px) scale(1.04);
+    box-shadow: 0 0 18px rgba(145,70,255,.8), 0 0 54px rgba(145,70,255,.4), inset 0 0 26px rgba(145,70,255,.2);
+  }
+  .btn-ghost:active { transform: skewX(-7deg) translateY(1px) scale(.97); }
+  .btn-sm { font-size: .82rem; padding: .62em 1.25em; border-radius: 8px; }
+
+  /* ========== hero ========== */
+  #hero {
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    padding: 7.5rem 0 4.5rem;
+    overflow: hidden;
+    position: relative;
+  }
+  #fx {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+  .hero-copy h1 {
+    font-size: clamp(2.7rem, 7.4vw, 5.6rem);
+    margin: 1.1rem 0 1.4rem;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, .65);
+  }
+  .hero-copy h1 .line2 { display: inline-block; filter: drop-shadow(0 0 22px rgba(145, 70, 255, .45)) drop-shadow(0 0 10px rgba(83, 252, 24, .3)); }
+  .hero-sub {
+    max-width: 34em;
+    font-size: clamp(1rem, 2.2vw, 1.16rem);
+    color: var(--dim);
+    margin-bottom: 2.1rem;
+  }
+  .hero-sub strong { color: var(--white); }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: center; }
+  .hero-note {
+    margin-top: 1.3rem;
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+
+  /* hero: mock overlay demo (the product demoing itself) */
+  .hero-demo {
+    justify-self: end;
+    width: min(400px, 100%);
+    transform: rotate(1.6deg);
+  }
+  .demo-window {
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 60px rgba(145, 70, 255, .12);
+  }
+  .demo-titlebar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: 0 .25rem .8rem;
+    font-family: var(--mono);
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .demo-titlebar .rec {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #ff3355;
+    box-shadow: 0 0 10px #ff3355;
+    animation: pulseDot 1.4s ease-in-out infinite;
+  }
+  .demo-feed {
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+    justify-content: flex-end;
+  }
+  .dcard {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    padding: .7rem .8rem .7rem .95rem;
+    margin-top: .55rem;
+    border-radius: 13px;
+    background: rgba(9, 12, 20, .85);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(46px) scale(.94);
+    transition: opacity .4s ease, transform .55s var(--overshoot);
+  }
+  .dcard.in { opacity: 1; transform: none; }
+  .dcard.out { opacity: 0; transform: translateX(-30px) scale(.92); transition: opacity .3s ease, transform .3s ease; }
+  .dcard::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--ac, var(--green));
+    box-shadow: 0 0 12px var(--ac, var(--green));
+  }
+  .dcard .ic {
+    flex: 0 0 auto;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--line);
+  }
+  .dcard .ag {
+    font-size: .62rem;
+    font-weight: 800;
+    font-family: var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ac, var(--green));
+    text-shadow: 0 0 9px var(--ac, var(--green));
+  }
+  .dcard .tt { font-size: .82rem; font-weight: 650; line-height: 1.3; color: var(--white); }
+  .demo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: .8rem;
+    padding: .35rem .8rem .35rem .6rem;
+    border-radius: 999px;
+    background: rgba(9, 12, 20, .85);
+    border: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .demo-chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+
+  /* ========== ticker ========== */
+  .ticker {
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: rgba(14, 14, 23, .6);
+    padding: .68rem 0;
+    position: relative;
+    z-index: 2;
+  }
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    animation: tickerScroll 26s linear infinite;
+  }
+  .ticker-track > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.4rem;
+    padding-right: 2.4rem;
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--dim);
+  }
+  .ticker-track b { color: var(--green); text-shadow: 0 0 10px rgba(83, 252, 24, .55); font-weight: 700; }
+  .ticker-track i { color: var(--purple-l); text-shadow: 0 0 10px rgba(145, 70, 255, .55); font-style: normal; }
+  @keyframes tickerScroll { to { transform: translateX(-50%); } }
+
+  /* ========== proof ========== */
+  .proof-lead {
+    max-width: 42em;
+    font-size: clamp(1.02rem, 2.3vw, 1.2rem);
+    color: var(--dim);
+  }
+  .proof-lead strong { color: var(--white); }
+  .proof-lead .hl-g { color: var(--green); font-weight: 700; text-shadow: 0 0 14px rgba(83, 252, 24, .4); }
+  .clip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.4rem;
+    margin-top: 2.6rem;
+  }
+  /* TODO: replace the three .clip-slot frames with real clip embeds
+     (self-host the mp4s or swap in Kick clip iframes at ship time). */
+  .clip-slot {
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      repeating-linear-gradient(-45deg, rgba(255,255,255,.028) 0 14px, transparent 14px 28px),
+      linear-gradient(160deg, #11111c, #0c0c14);
+    transform: rotate(var(--tilt, -1deg));
+    transition: transform .45s var(--overshoot), box-shadow .35s ease, border-color .35s ease;
+  }
+  .clip-slot:nth-child(2) { --tilt: 1.2deg; }
+  .clip-slot:nth-child(3) { --tilt: -.8deg; }
+  .clip-slot:hover {
+    transform: rotate(0deg) translateY(-6px) scale(1.03);
+    border-color: rgba(83, 252, 24, .55);
+    box-shadow: var(--glow-g), 0 22px 50px rgba(0, 0, 0, .5);
+  }
+  .clip-slot .play {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(83, 252, 24, .12);
+    border: 2px solid var(--green);
+    box-shadow: var(--glow-g);
+    transition: transform .35s var(--overshoot);
+  }
+  .clip-slot:hover .play { transform: scale(1.15); }
+  .clip-slot .play::before {
+    content: "";
+    width: 0; height: 0;
+    margin-left: 5px;
+    border-style: solid;
+    border-width: 11px 0 11px 19px;
+    border-color: transparent transparent transparent var(--green);
+    filter: drop-shadow(0 0 8px rgba(83, 252, 24, .8));
+  }
+  .clip-slot .tag {
+    position: absolute;
+    left: .85rem; bottom: .7rem;
+    font-family: var(--mono);
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+  .clip-slot .badge-live {
+    position: absolute;
+    right: .85rem; top: .7rem;
+    font-family: var(--mono);
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .2em;
+    padding: .28em .7em;
+    border-radius: 6px;
+    color: var(--purple-l);
+    border: 1px solid rgba(145, 70, 255, .5);
+    background: rgba(145, 70, 255, .1);
+    text-shadow: 0 0 8px rgba(145, 70, 255, .6);
+  }
+
+  /* ========== how easy ========== */
+  #how { background: linear-gradient(180deg, transparent, rgba(145, 70, 255, .045) 40%, transparent); }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.4rem;
+  }
+  .step {
+    position: relative;
+    padding: 2.1rem 1.6rem 1.8rem;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transform: rotate(var(--tilt, -.7deg));
+    transition: transform .45s var(--overshoot), box-shadow .35s ease, border-color .35s ease;
+  }
+  .step:nth-child(2) { --tilt: .8deg; }
+  .step:nth-child(3) { --tilt: -.5deg; }
+  .step:hover {
+    transform: rotate(0deg) translateY(-7px);
+    border-color: rgba(145, 70, 255, .55);
+    box-shadow: var(--glow-p), 0 22px 46px rgba(0, 0, 0, .5);
+  }
+  .step .num {
+    position: absolute;
+    right: .4rem; top: -1.6rem;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    font-size: 7.2rem;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(145, 70, 255, .3);
+    pointer-events: none;
+    user-select: none;
+  }
+  .step:first-child .num { -webkit-text-stroke-color: rgba(83, 252, 24, .3); }
+  .step h3 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    margin: .4rem 0 .7rem;
+  }
+  .step p { color: var(--dim); font-size: .95rem; max-width: 26em; }
+  .step .kicker {
+    font-family: var(--mono);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(83, 252, 24, .5);
+  }
+  .how-punch {
+    margin-top: 2.4rem;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: clamp(1.2rem, 3.4vw, 1.9rem);
+    color: var(--dim);
+  }
+  .how-punch b { color: var(--green); text-shadow: var(--glow-g); }
+
+  /* ========== what you get ========== */
+  .get-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.4rem;
+  }
+  .get-card {
+    padding: 1.9rem 1.5rem 1.7rem;
+    border-radius: 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    transform: rotate(var(--tilt, .6deg));
+    transition: transform .45s var(--overshoot), box-shadow .35s ease, border-color .35s ease;
+  }
+  .get-card:nth-child(odd) { --tilt: -.7deg; }
+  .get-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: radial-gradient(420px 200px at 50% 0%, var(--hov, rgba(83, 252, 24, .12)), transparent 70%);
+    transition: opacity .35s ease;
+    pointer-events: none;
+  }
+  .get-card:hover {
+    transform: rotate(0) translateY(-7px) scale(1.02);
+    border-color: var(--hb, rgba(83, 252, 24, .55));
+    box-shadow: 0 0 16px var(--hs, rgba(83,252,24,.4)), 0 0 50px var(--hs2, rgba(83,252,24,.18)), 0 22px 46px rgba(0,0,0,.5);
+  }
+  .get-card:hover::after { opacity: 1; }
+  .get-card.alt { --hov: rgba(145, 70, 255, .14); --hb: rgba(145, 70, 255, .6); --hs: rgba(145,70,255,.45); --hs2: rgba(145,70,255,.2); }
+  .get-card .gi {
+    width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 25px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--line);
+    margin-bottom: 1.1rem;
+  }
+  .get-card h3 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 1.32rem;
+    margin-bottom: .55rem;
+  }
+  .get-card p { color: var(--dim); font-size: .92rem; }
+
+  /* ========== pricing ========== */
+  #pricing { background: linear-gradient(180deg, transparent, rgba(83, 252, 24, .04) 45%, transparent); }
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.6rem;
+    align-items: stretch;
+  }
+  .tier {
+    display: flex;
+    flex-direction: column;
+    padding: 2.1rem 1.7rem 1.9rem;
+    border-radius: 20px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    position: relative;
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform .45s var(--overshoot), box-shadow .35s ease, border-color .35s ease;
+  }
+  .tier:hover { transform: rotate(0) translateY(-8px); box-shadow: 0 26px 56px rgba(0, 0, 0, .55); }
+  .tier[data-accent="green"]:hover  { border-color: rgba(83, 252, 24, .5);  box-shadow: var(--glow-g), 0 26px 56px rgba(0,0,0,.55); }
+  .tier[data-accent="purple"]:hover { border-color: rgba(145, 70, 255, .5); box-shadow: var(--glow-p), 0 26px 56px rgba(0,0,0,.55); }
+  .tier.featured {
+    border: 2px solid transparent;
+    background:
+      linear-gradient(var(--panel), var(--panel)) padding-box,
+      conic-gradient(from var(--ga, 0deg), var(--green), var(--purple) 34%, rgba(255,255,255,.16) 52%, var(--purple) 72%, var(--green)) border-box;
+    animation: spinBorder 5.5s linear infinite;
+    transform: scale(1.035) rotate(-.4deg);
+    z-index: 1;
+    box-shadow: 0 0 30px rgba(83, 252, 24, .12), 0 0 60px rgba(145, 70, 255, .12), 0 30px 60px rgba(0, 0, 0, .55);
+  }
+  .tier.featured:hover { transform: scale(1.05) rotate(0); }
+  .tier .flag {
+    position: absolute;
+    top: -0.95rem;
+    left: 50%;
+    transform: translateX(-50%) skewX(-7deg);
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .78rem;
+    padding: .34em 1.1em;
+    border-radius: 8px;
+    background: var(--green);
+    color: #06120a;
+    box-shadow: var(--glow-g);
+    white-space: nowrap;
+  }
+  .tier .t-name {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    letter-spacing: .04em;
+  }
+  .tier .t-tag { font-family: var(--mono); font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: var(--dimmer); margin-top: .2rem; }
+  .tier .t-price {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    margin: 1.3rem 0 .4rem;
+  }
+  .tier .t-amount {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    font-size: 3.1rem;
+    line-height: 1;
+  }
+  .tier[data-accent="green"]  .t-amount { color: var(--green);  text-shadow: 0 0 22px rgba(83, 252, 24, .4); }
+  .tier[data-accent="purple"] .t-amount { color: var(--purple-l); text-shadow: 0 0 22px rgba(145, 70, 255, .45); }
+  .tier .t-period { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dimmer); }
+  .tier .t-feats { flex: 1; margin: .4rem 0 1.6rem; }
+  .tier .t-feats li {
+    padding: .5rem 0 .5rem 1.7rem;
+    position: relative;
+    font-size: .92rem;
+    color: var(--dim);
+    border-bottom: 1px dashed rgba(255, 255, 255, .07);
+  }
+  .tier .t-feats li:last-child { border-bottom: 0; }
+  .tier .t-feats li::before {
+    content: "▸";
+    position: absolute;
+    left: .2rem;
+    color: var(--green);
+    text-shadow: 0 0 8px rgba(83, 252, 24, .6);
+  }
+  .tier[data-accent="purple"] .t-feats li::before { color: var(--purple-l); text-shadow: 0 0 8px rgba(145, 70, 255, .6); }
+  .tier .btn { align-self: stretch; text-align: center; }
+  .price-note {
+    margin-top: 2rem;
+    font-size: .88rem;
+    color: var(--dimmer);
+    max-width: 46em;
+  }
+  .price-note strong { color: var(--dim); }
+
+  /* ========== partners / earn ========== */
+  #partners { background: linear-gradient(180deg, transparent, rgba(145, 70, 255, .05) 45%, transparent); }
+  .sec-sub { color: var(--dim); max-width: 44em; margin: 1rem 0 0; font-size: 1.04rem; line-height: 1.62; }
+  .sec-sub b { color: var(--white); }
+  .earn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 1.4rem; margin: 2.4rem 0 2rem; }
+  .earn-card { position: relative; padding: 1.9rem 1.6rem; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; transition: transform .4s var(--overshoot), border-color .3s ease, box-shadow .3s ease; }
+  .earn-card:hover { transform: translateY(-6px); }
+  .earn-card[data-accent="green"]:hover { border-color: rgba(83, 252, 24, .45); box-shadow: var(--glow-g); }
+  .earn-card[data-accent="purple"]:hover { border-color: rgba(145, 70, 255, .45); box-shadow: var(--glow-p); }
+  .earn-card.featured { border-color: rgba(145, 70, 255, .38); box-shadow: 0 0 28px rgba(145, 70, 255, .1); }
+  .earn-num { position: absolute; top: .6rem; right: 1.1rem; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 2.6rem; color: rgba(255, 255, 255, .06); letter-spacing: -.02em; }
+  .earn-tag { display: inline-block; font-family: var(--mono); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: var(--purple-l); border: 1px solid rgba(145, 70, 255, .4); border-radius: 6px; padding: .28em .7em; margin-bottom: .85rem; }
+  .earn-card h3 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 1.32rem; margin: .2rem 0 .55rem; }
+  .earn-card p { color: var(--dim); font-size: .94rem; line-height: 1.56; }
+  .earn-card b { color: var(--white); }
+  .money-math { text-align: center; padding: clamp(2rem, 5vw, 3rem) 1.8rem; border-radius: 22px; }
+  .mm-line { display: flex; align-items: center; justify-content: center; gap: 1.1rem; flex-wrap: wrap; }
+  .mm-label { font-family: var(--display); font-style: italic; font-weight: 800; font-size: clamp(1.2rem, 3vw, 1.6rem); }
+  .mm-arrow { color: var(--dimmer); font-size: 1.7rem; }
+  .mm-amount { font-family: var(--display); font-style: italic; font-weight: 900; line-height: 1; }
+  .mm-amount .grad-text { font-size: clamp(2.8rem, 8vw, 3.8rem); }
+  .mm-per { font-size: 1.3rem; color: var(--dim); }
+  .mm-note { color: var(--dim); max-width: 34em; margin: 1.1rem auto 1.7rem; line-height: 1.6; }
+  .mm-note em { color: var(--green); font-style: normal; }
+  .mm-fine { margin-top: 1.1rem; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dimmer); }
+
+  /* ========== prerelease ========== */
+  #prerelease .pre-inner {
+    padding: clamp(2.2rem, 6vw, 3.6rem);
+    border-radius: 24px;
+    text-align: center;
+  }
+  #prerelease h2 { font-size: clamp(1.9rem, 5vw, 3.1rem); margin-top: .5rem; }
+  .store-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.9rem 0 1.4rem;
+  }
+  /* TODO: replace these placeholder pills with the real TestFlight public-link
+     badge and App Store badge assets (inlined as data: URIs) once live. */
+  .store-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .8rem 1.5rem;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04);
+    text-align: left;
+    transition: transform .35s var(--overshoot), border-color .3s, box-shadow .3s;
+  }
+  .store-badge:hover { transform: translateY(-4px); border-color: rgba(145, 70, 255, .5); box-shadow: var(--glow-p); }
+  .store-badge .sb-ic { font-size: 1.6rem; }
+  .store-badge .sb-top { font-family: var(--mono); font-size: .58rem; letter-spacing: .18em; text-transform: uppercase; color: var(--dimmer); }
+  .store-badge .sb-main { font-weight: 800; font-size: 1rem; letter-spacing: .02em; }
+  .store-badge .soon {
+    margin-left: .6rem;
+    font-family: var(--mono);
+    font-size: .56rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    padding: .3em .7em;
+    border-radius: 6px;
+    color: var(--green);
+    border: 1px solid rgba(83, 252, 24, .5);
+    background: rgba(83, 252, 24, .08);
+    text-shadow: 0 0 8px rgba(83, 252, 24, .5);
+  }
+  .pre-line { color: var(--dim); font-size: 1.02rem; }
+  .pre-line b { color: var(--white); }
+  .pre-line a { color: var(--purple-l); font-weight: 700; text-shadow: 0 0 10px rgba(145, 70, 255, .5); }
+
+  /* ========== FAQ + waitlist ========== */
+  .faq-wrap { max-width: 760px; margin: 0 auto; }
+  details {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    margin-bottom: .9rem;
+    overflow: hidden;
+    transition: border-color .3s ease, box-shadow .3s ease;
+  }
+  details:hover, details[open] { border-color: rgba(83, 252, 24, .4); }
+  details[open] { box-shadow: 0 0 22px rgba(83, 252, 24, .1); }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.3rem;
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 1.06rem;
+    letter-spacing: .03em;
+    user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: "+";
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    font-style: normal;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(83, 252, 24, .6);
+    transition: transform .35s var(--overshoot);
+  }
+  details[open] summary::after { transform: rotate(45deg); }
+  details .a {
+    padding: 0 1.3rem 1.2rem;
+    color: var(--dim);
+    font-size: .95rem;
+    max-width: 60em;
+  }
+  details .a b { color: var(--white); }
+
+  /* waitlist form */
+  #waitlist { margin-top: 3.5rem; scroll-margin-top: 90px; }
+  .wl-box {
+    padding: clamp(1.8rem, 5vw, 2.8rem);
+    border-radius: 22px;
+    text-align: center;
+  }
+  .wl-box h3 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: clamp(1.6rem, 4.5vw, 2.5rem);
+    margin-bottom: .5rem;
+  }
+  .wl-box p { color: var(--dim); font-size: .96rem; margin-bottom: 1.6rem; }
+  .wl-form {
+    display: flex;
+    gap: .8rem;
+    max-width: 520px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .wl-form input[type="email"] {
+    flex: 1;
+    min-width: 0;
+    background: rgba(9, 12, 20, .85);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: .95em 1.1em;
+    color: var(--white);
+    font-size: .96rem;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s;
+  }
+  .wl-form input[type="email"]::placeholder { color: var(--dimmer); }
+  .wl-form input[type="email"]:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(83, 252, 24, .18), var(--glow-g);
+  }
+  .wl-status {
+    margin-top: 1rem;
+    min-height: 1.4em;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  .wl-status.ok { color: var(--green); text-shadow: 0 0 12px rgba(83, 252, 24, .6); }
+  .wl-status.err { color: #ff5577; text-shadow: 0 0 12px rgba(255, 85, 119, .5); }
+  .wl-fine { margin-top: .9rem; font-size: .72rem; color: var(--dimmer); }
+
+  /* dom particle burst bits */
+  .pbit {
+    position: fixed;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 90;
+  }
+
+  /* ========== footer ========== */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 2.6rem 0 3rem;
+    text-align: center;
+  }
+  footer .f-logo {
+    justify-content: center;
+    display: inline-flex;
+    margin-bottom: .9rem;
+  }
+  footer p { font-size: .78rem; color: var(--dimmer); max-width: 52em; margin: .35rem auto 0; }
+
+  /* ========== responsive ========== */
+  @media (max-width: 900px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-demo { justify-self: center; transform: rotate(0deg); margin-top: 1.5rem; }
+    .demo-feed { min-height: 240px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+    .nav-links { gap: 0; }
+  }
+  @media (max-width: 560px) {
+    .nav-inner { height: 54px; gap: .8rem; }
+    .logo { font-size: .88rem; }
+    .nav-cta { margin-left: 0; font-size: .7rem; padding: .55em 1em; }
+    #hero { padding-top: 6rem; }
+    .hero-ctas .btn { width: 100%; text-align: center; }
+    .wl-form { flex-direction: column; }
+    .tier.featured { transform: none; }
+    .tier.featured:hover { transform: translateY(-8px); }
+  }
+
+  /* ========== reduced motion: kill the party ========== */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal, .dcard { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= NAV ================= -->
+  <nav aria-label="Main">
+    <div class="wrap nav-inner">
+      <a class="logo" href="#hero"><span class="dot" aria-hidden="true"></span><span data-name>Rackhouse</span></a>
+      <div class="nav-links">
+        <a href="#proof">Proof</a>
+        <a href="#how">How</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#partners">Earn</a>
+        <a href="#faq">FAQ</a>
+        <a class="btn btn-primary btn-sm nav-cta" href="https://whop.com/rackhouse-ff71/rackhouse-founding" target="_blank" rel="noopener"><span>Get Founding</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= 1. HERO ================= -->
+  <header id="hero">
+    <canvas id="fx" aria-hidden="true"></canvas>
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow reveal">Live on Kick &bull; every stream is the demo</p>
+        <h1 class="display reveal" style="--d:.08s">
+          The house that<br>
+          <span class="line2 grad-text glitch" id="glitch-line" data-text="STACKS YOUR RACKS.">stacks your racks.</span>
+        </h1>
+        <p class="hero-sub reveal" style="--d:.16s">
+          <strong><span data-name>Rackhouse</span></strong> is <strong>the AI swarm you watch on my stream</strong> —
+          <strong>12 specialized agents</strong> clipping, shipping, posting, and hunting money moves while you
+          stream, sleep, or touch grass. Like bourbon aging in the dark, your racks stack while you're away.
+          You watch every move roll across your overlay. <strong>Chat watches it too.</strong>
+        </p>
+        <div class="hero-ctas reveal" style="--d:.24s">
+          <a class="btn btn-primary" id="hero-cta" href="https://whop.com/rackhouse-ff71/rackhouse-founding" target="_blank" rel="noopener"><span>Claim your founding seat</span></a>
+          <!-- TODO: drop the real Kick channel URL into KICK_URL in the script below -->
+          <a class="btn btn-ghost js-watch-live" href="#" target="_blank" rel="noopener"><span>&#9654;&#65038; Watch it live</span></a>
+        </div>
+        <p class="hero-note reveal" style="--d:.32s">No code. No config. Runs in your Discord &mdash; or on your Mac.</p>
+      </div>
+
+      <!-- the product demoing itself: mock overlay feed -->
+      <div class="hero-demo reveal" style="--d:.3s" aria-label="Live overlay preview (simulated)">
+        <div class="demo-window gborder">
+          <div class="demo-titlebar"><span class="rec" aria-hidden="true"></span> On my stream right now</div>
+          <div class="demo-feed" id="demo-feed"></div>
+          <div class="demo-chip"><span class="dot" aria-hidden="true"></span><span data-name>Rackhouse</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= ticker ================= -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track" id="ticker-track">
+      <span>
+        <b>12 AGENTS</b> &#10022; <i>4 MONEY ENGINES</i> &#10022; <b>ZERO CONFIG</b> &#10022; <i>RUNS IN YOUR DISCORD</i> &#10022;
+        <b>OVERLAY = LIVE DEMO</b> &#10022; <i>WEEKLY DROPS</i> &#10022; <b>CHAT SEES EVERYTHING</b> &#10022; <i>YOU KEEP EVERY DOLLAR</i> &#10022;
+      </span>
+      <!-- duplicated for the seamless loop -->
+      <span>
+        <b>12 AGENTS</b> &#10022; <i>4 MONEY ENGINES</i> &#10022; <b>ZERO CONFIG</b> &#10022; <i>RUNS IN YOUR DISCORD</i> &#10022;
+        <b>OVERLAY = LIVE DEMO</b> &#10022; <i>WEEKLY DROPS</i> &#10022; <b>CHAT SEES EVERYTHING</b> &#10022; <i>YOU KEEP EVERY DOLLAR</i> &#10022;
+      </span>
+    </div>
+  </div>
+
+  <!-- ================= 2. PROOF ================= -->
+  <section id="proof">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow purple">Receipts</p>
+        <h2 class="display">You've literally <span class="grad-text">watched it work</span></h2>
+      </div>
+      <p class="proof-lead reveal" style="--d:.08s">
+        Those cards popping up on my overlay while I talk? <strong>That's not a graphic. That's the product.</strong>
+        Every clip posted, every task finished, every dollar tracked on stream is
+        <span data-name>Rackhouse</span> doing <span class="hl-g">real work in real time</span> —
+        on the exact system you can run yourself. Every stream is an unedited, unscripted demo. Receipts below.
+      </p>
+      <div class="clip-grid">
+        <!-- TODO: swap these placeholder frames for real clip embeds (self-hosted mp4 or Kick clip iframe) -->
+        <div class="clip-slot reveal" style="--d:.05s" role="img" aria-label="Clip slot 1 placeholder">
+          <span class="badge-live">FROM STREAM</span>
+          <span class="play" aria-hidden="true"></span>
+          <span class="tag">CLIP_01 // agent ships a build live</span>
+        </div>
+        <div class="clip-slot reveal" style="--d:.15s" role="img" aria-label="Clip slot 2 placeholder">
+          <span class="badge-live">FROM STREAM</span>
+          <span class="play" aria-hidden="true"></span>
+          <span class="tag">CLIP_02 // clipper posts mid-stream</span>
+        </div>
+        <div class="clip-slot reveal" style="--d:.25s" role="img" aria-label="Clip slot 3 placeholder">
+          <span class="badge-live">FROM STREAM</span>
+          <span class="play" aria-hidden="true"></span>
+          <span class="tag">CLIP_03 // chat watches money land</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. HOW EASY IT IS ================= -->
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Stupid easy</p>
+        <h2 class="display">So easy it feels like <span class="grad-text">cheating</span></h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal" style="--d:.05s">
+          <span class="num" aria-hidden="true">01</span>
+          <p class="kicker">One click</p>
+          <h3>Sign in</h3>
+          <p>OAuth. The same button you've pressed a thousand times. No terminal, no API keys, no config files, no YouTube tutorial rabbit hole.</p>
+        </div>
+        <div class="step reveal" style="--d:.15s">
+          <span class="num" aria-hidden="true">02</span>
+          <p class="kicker">You do nothing</p>
+          <h3>The agent sets everything up</h3>
+          <p>It installs itself, wires up OBS, checks its own work, and tells you when it's done. Setup is the first job your swarm ever does for you.</p>
+        </div>
+        <div class="step reveal" style="--d:.25s">
+          <span class="num" aria-hidden="true">03</span>
+          <p class="kicker">The fun part</p>
+          <h3>Watch your swarm go</h3>
+          <p>Open the app. Cards start rolling in — clips posted, drafts ready, money moves queued. Your overlay shows chat what your swarm just did.</p>
+        </div>
+      </div>
+      <p class="how-punch reveal">If you can sign into Netflix, <b>you can run a swarm.</b></p>
+    </div>
+  </section>
+
+  <!-- ================= 4. WHAT YOU GET ================= -->
+  <section id="get">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow purple">The loadout</p>
+        <h2 class="display">What you <span class="grad-text">get</span></h2>
+      </div>
+      <div class="get-grid">
+        <div class="get-card reveal" style="--d:.03s">
+          <div class="gi" aria-hidden="true">&#128421;&#65039;</div>
+          <h3>The command center</h3>
+          <p>Slash a command in your Discord, or run the menu-bar app on your Mac. Your whole swarm — status, approvals, results — one glance away.</p>
+        </div>
+        <div class="get-card alt reveal" style="--d:.11s">
+          <div class="gi" aria-hidden="true">&#128250;</div>
+          <h3>The OBS overlay</h3>
+          <p>The exact overlay from my stream. Your agents' wins pop on YOUR stream — your content flexes itself while you play.</p>
+        </div>
+        <div class="get-card reveal" style="--d:.19s">
+          <div class="gi" aria-hidden="true">&#129302;</div>
+          <h3>12 specialized agents</h3>
+          <p>Clipper, scout, shipper, analyst, copywriter and the rest of the crew — running four money engines in the background.</p>
+        </div>
+        <div class="get-card alt reveal" style="--d:.27s">
+          <div class="gi" aria-hidden="true">&#128230;</div>
+          <h3>Weekly drops</h3>
+          <p>New agents, engine playbooks, and overlay themes on a weekly cadence. Your swarm gets stronger while you sleep.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. PRICING ================= -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Damage</p>
+        <h2 class="display">Pick your <span class="grad-text">tier</span></h2>
+      </div>
+      <!-- tiers are rendered from the PRICING config object in the script -->
+      <div class="price-grid" id="price-grid"></div>
+      <p class="price-note reveal">
+        <strong>Straight up:</strong> on the Mac app you bring your own Claude account — that's your AI staff's payroll, and it stays 100% yours; we never touch your login, your keys, or your money. Prefer zero setup? The Discord bot runs on our compute (credit-based) — nothing to install. Prices are locked: annual billing is 10&times; monthly (two months free), and the first 100 Founding seats keep $79/mo for life.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 5b. PARTNER / EARN ================= -->
+  <section id="partners">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow purple">Cut of the take</p>
+        <h2 class="display">You don't sell it. <span class="grad-text">You share it.</span></h2>
+      </div>
+      <p class="sec-sub reveal">You already watched it work &mdash; so you don't pitch a thing. Drop your link under a clip and get paid <b>every month</b> someone you brought stays subscribed. Recruiters build the house faster than closers, and cheaper, even after the split. It's how you start stacking before you even own it.</p>
+
+      <div class="earn-grid">
+        <div class="earn-card reveal" data-accent="green">
+          <span class="earn-num" aria-hidden="true">01</span>
+          <h3>Run it</h3>
+          <p>The swarm works your four money engines while you stream, sleep, or touch grass. The product itself is leg one.</p>
+        </div>
+        <div class="earn-card reveal featured" data-accent="purple" style="--d:.08s">
+          <span class="earn-tag">The big one</span>
+          <span class="earn-num" aria-hidden="true">02</span>
+          <h3>Refer it &mdash; paid forever</h3>
+          <p><b>30% on every sale you send. 40% recurring once you own it</b> &mdash; paid every single month they stay, not just the first. Grab your link, post one clip, collect on repeat.</p>
+        </div>
+        <div class="earn-card reveal" data-accent="green" style="--d:.16s">
+          <span class="earn-num" aria-hidden="true">03</span>
+          <h3>Clip it</h3>
+          <p>Content rewards on top: get paid per 1,000 views on clips that drive signups. One clip, three checks &mdash; views, commission, and the renewals behind them.</p>
+        </div>
+      </div>
+
+      <div class="money-math gborder reveal">
+        <div class="mm-line">
+          <span class="mm-label">Refer 5 Core members</span>
+          <span class="mm-arrow" aria-hidden="true">&rarr;</span>
+          <span class="mm-amount"><span class="grad-text">$258</span><span class="mm-per">/mo</span></span>
+        </div>
+        <p class="mm-note">Recurring. On repeat. Landing every month they stay &mdash; <em>while you sleep.</em> That's the swarm working for you before you even own it.</p>
+        <a class="btn btn-primary" href="https://whop.com/rackhouse-ff71/" target="_blank" rel="noopener"><span>Become a partner</span></a>
+        <p class="mm-fine">30% for anyone with a link &middot; 40% recurring for members &middot; paid on every renewal</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. TWO WAYS IN ================= -->
+  <section id="prerelease">
+    <div class="wrap">
+      <div class="pre-inner gborder reveal">
+        <p class="eyebrow purple">Two ways in</p>
+        <h2 class="display">Run it in <span class="grad-text">Discord</span> &mdash; or on your Mac</h2>
+        <p class="pre-line" style="margin-top:.5rem">
+          <b>No Mac? No problem.</b> Type a slash command in the Rackhouse Discord and the swarm runs on our compute &mdash; credit-based, nothing to install. Want the full menu-bar command center and overlay? That's the Mac app: bring your own Claude account, near-zero markup.
+        </p>
+        <div class="store-badges">
+          <a class="store-badge" href="https://discord.gg/7vEnUYSx4Y" target="_blank" rel="noopener" style="text-decoration:none">
+            <span class="sb-ic" aria-hidden="true">&#128172;</span>
+            <span>
+              <span class="sb-top">Type a command in</span><br>
+              <span class="sb-main">Discord</span>
+            </span>
+            <span class="soon">BETA</span>
+          </a>
+          <!-- TODO: replace with the real TestFlight public link + badge art (inline data: URI) -->
+          <span class="store-badge">
+            <span class="sb-ic" aria-hidden="true">&#128640;</span>
+            <span>
+              <span class="sb-top">Prerelease on</span><br>
+              <span class="sb-main">TestFlight</span>
+            </span>
+            <span class="soon">SOON</span>
+          </span>
+          <!-- TODO: replace with the real App Store / notarized DMG download badge when live -->
+          <span class="store-badge">
+            <span class="sb-ic" aria-hidden="true">&#63743;</span>
+            <span>
+              <span class="sb-top">Download for</span><br>
+              <span class="sb-main">macOS</span>
+            </span>
+            <span class="soon">SOON</span>
+          </span>
+        </div>
+        <p class="pre-line">
+          <b>Watch it run on my machine, live, every stream.</b>
+          <!-- TODO: same Kick URL slot as the hero sub-CTA -->
+          <a class="js-watch-live" href="#" target="_blank" rel="noopener">Pull up &#8599;</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 7. FAQ + WAITLIST ================= -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head reveal" style="text-align:center">
+        <p class="eyebrow">Questions</p>
+        <h2 class="display">Asked &amp; <span class="grad-text">answered</span></h2>
+      </div>
+      <div class="faq-wrap">
+        <details class="reveal">
+          <summary>Do I need to know how to code?</summary>
+          <div class="a"><b>No.</b> That's the whole point. You sign in, the agent does the setup, and everything after that happens in a normal Mac app. If you can install Discord, you're overqualified.</div>
+        </details>
+        <details class="reveal" style="--d:.06s">
+          <summary>What do I need to run it?</summary>
+          <div class="a"><b>A Mac and a Claude account.</b> That's it. Your agents run on your own Claude subscription — think of it as your AI staff's payroll. A bigger plan means a harder-working swarm, and we'll tell you exactly what to expect before you pay a cent.</div>
+        </details>
+        <details class="reveal" style="--d:.12s">
+          <summary>Is this the same thing I see on stream?</summary>
+          <div class="a"><b>Yes. Literally the same software.</b> The overlay on my stream is <span data-name>Rackhouse</span> running on my machine. No staged demos, no mockups — you've been watching the product work this entire time.</div>
+        </details>
+        <details class="reveal" style="--d:.18s">
+          <summary>What about refunds?</summary>
+          <div class="a"><b>Simple:</b> if it's not for you in the first 14 days, tell us and we'll make it right. The full plain-English refund policy goes up with pricing at launch — no fine-print games.</div>
+        </details>
+        <details class="reveal" style="--d:.24s">
+          <summary>When do I get access?</summary>
+          <div class="a"><b>Waitlist order, founding cohort first.</b> Early seats get the founding price, prerelease TestFlight access, and their setup done live on stream if they want the spotlight. Everyone else gets in as seats open. The earlier you're on the list, the earlier you're in.</div>
+        </details>
+
+        <!-- waitlist -->
+        <div id="waitlist" class="reveal">
+          <div class="wl-box gborder">
+            <h3>Get in <span class="grad-text">before the swarm drops</span></h3>
+            <p>First on the list = founding price, prerelease access, and bragging rights in chat.</p>
+            <form class="wl-form" id="wl-form" novalidate>
+              <input type="email" id="wl-email" name="email" placeholder="you@somewhere.com" autocomplete="email" required aria-label="Email address">
+              <button class="btn btn-primary" type="submit" id="wl-btn"><span>Lock me in</span></button>
+            </form>
+            <p class="wl-status" id="wl-status" role="status" aria-live="polite"></p>
+            <p class="wl-fine">No spam. Drop announcements and launch access only. Unsub anytime.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <div class="wrap">
+      <span class="logo f-logo"><span class="dot" aria-hidden="true"></span><span data-name>Rackhouse</span></span>
+      <p>Mac app: works with Claude Code, bring your own Claude account. Discord: runs on our compute, credit-based. Either way — your agents, your money.</p>
+      <p>&copy; <span id="yr">2026</span> <span data-name>Rackhouse</span>. Not affiliated with Kick, Twitch, Elgato, Apple, or Anthropic.</p>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==========================================================
+     BRAND — change this ONE string to rebrand the entire page.
+     Every visible name occurrence renders from PRODUCT_NAME.
+     ========================================================== */
+  const PRODUCT_NAME = "Rackhouse";
+
+  /* TODO: drop the real Kick channel URL here (used by every "watch it live" link) */
+  const KICK_URL = "#";
+
+  /* NOTE: WAITLIST_ENDPOINT lives directly above the waitlist form handler
+     near the bottom of this script — that's the one line to flip when the
+     permanent form backend is ready. */
+
+  /* ---------- fx level: ?fx=low degrades, ?fx=off kills (same approach as the overlay) ---------- */
+  const q = new URLSearchParams(location.search);
+  const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let FX = (q.get("fx") || "high").toLowerCase();
+  if (["high", "low", "off"].indexOf(FX) === -1) FX = "high";
+  if (REDUCED) FX = "off";
+
+  /* ---------- render the name everywhere ---------- */
+  document.querySelectorAll("[data-name]").forEach(function (el) {
+    el.textContent = PRODUCT_NAME;
+  });
+  document.title = PRODUCT_NAME + " — the house that stacks your racks";
+
+  /* ---------- wire the Kick link slots ---------- */
+  document.querySelectorAll(".js-watch-live").forEach(function (a) {
+    a.href = KICK_URL;
+  });
+
+  document.getElementById("yr").textContent = String(new Date().getFullYear());
+
+  /* ==========================================================
+     PRICING — rendered from this config object.
+     TODO: fill real prices from pricing-model.md before launch.
+     ========================================================== */
+  const PRICING = {
+    /* annual billing = 10x the monthly rate (two months free) */
+    annualMultiplier: 10,
+    tiers: [
+      {
+        id: "founding",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-founding",
+        image: "assets/tier-founding.jpg",
+        name: "FOUNDING",
+        tagline: "First 100 seats — locked for life",
+        price: "$79",
+        period: "per month",
+        accent: "green",
+        featured: true,
+        flag: "PRICE LOCKED FOR LIFE",
+        cta: "Claim a founding seat",
+        features: [
+          "The full 12-agent swarm — nothing held back",
+          "The macOS menu-bar app + full OBS overlay (no watermark)",
+          "Zero-config, agent-led setup",
+          "Every future update, forever",
+          "Founding badge — chat sees you were here first",
+          "$79/mo price locked for life ($790/yr annual)"
+        ]
+      },
+      {
+        id: "core",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-core",
+        image: "assets/tier-core.jpg",
+        name: "CORE",
+        tagline: "The full swarm",
+        price: "$129",
+        period: "per month",
+        accent: "purple",
+        featured: false,
+        cta: "Get Core",
+        features: [
+          "Everything in Founding",
+          "Engine config packs — clipping, SaaS, voice, faceless",
+          "Weekly drops: new agents, playbooks, overlay themes",
+          "$1,290/yr on annual billing"
+        ]
+      },
+      {
+        id: "operator",
+        checkout: "https://whop.com/rackhouse-ff71/rackhouse-operator",
+        image: "assets/tier-operator.jpg",
+        name: "OPERATOR",
+        tagline: "Run it like a business",
+        price: "$249",
+        period: "per month",
+        accent: "green",
+        featured: false,
+        cta: "Get Operator",
+        features: [
+          "Everything in Core",
+          "Multi-engine profiles — run several money engines side by side",
+          "1:1 onboarding to get your swarm dialed in",
+          "Monthly live session — build alongside me on stream",
+          "$2,490/yr on annual billing"
+        ]
+      }
+    ]
+  };
+
+  (function renderPricing() {
+    const grid = document.getElementById("price-grid");
+    PRICING.tiers.forEach(function (t, i) {
+      const card = document.createElement("div");
+      card.className = "tier reveal" + (t.featured ? " featured" : "");
+      card.dataset.accent = t.accent;
+      card.style.setProperty("--d", (i * 0.09) + "s");
+      if (!t.featured) card.style.setProperty("--tilt", i === 0 ? "-.7deg" : ".7deg");
+
+      let html = "";
+      if (t.flag) html += '<span class="flag">' + t.flag + "</span>";
+      html += '<div class="t-name">' + t.name + "</div>";
+      html += '<div class="t-tag">' + t.tagline + "</div>";
+      html += '<div class="t-price"><span class="t-amount">' + t.price + '</span><span class="t-period">' + t.period + "</span></div>";
+      html += '<ul class="t-feats">' + t.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
+      html += '<a class="btn ' + (t.featured ? "btn-primary" : "btn-ghost") + '" href="' + t.checkout + '" target="_blank" rel="noopener"><span>' + t.cta + "</span></a>";
+      card.innerHTML = html;
+      grid.appendChild(card);
+    });
+  })();
+
+  /* ==========================================================
+     Reveal-on-scroll with overshoot
+     ========================================================== */
+  (function reveals() {
+    const els = document.querySelectorAll(".reveal");
+    if (REDUCED || !("IntersectionObserver" in window)) {
+      els.forEach(function (el) { el.classList.add("in"); });
+      return;
+    }
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add("in");
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+
+  /* ==========================================================
+     Glitch accent — sparing, randomized
+     ========================================================== */
+  (function glitch() {
+    if (FX === "off") return;
+    const el = document.getElementById("glitch-line");
+    if (!el) return;
+    function hit() {
+      el.classList.add("glitching");
+      setTimeout(function () { el.classList.remove("glitching"); }, 380);
+      setTimeout(hit, 4500 + Math.random() * 5500);
+    }
+    setTimeout(hit, 2200);
+  })();
+
+  /* ==========================================================
+     Hero particle canvas — same fx approach as the overlay:
+     ?fx=low degrades (fewer particles, no links, no bursts),
+     ?fx=off / prefers-reduced-motion renders one static frame.
+     ========================================================== */
+  (function particles() {
+    const canvas = document.getElementById("fx");
+    const hero = document.getElementById("hero");
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext("2d");
+
+    const GREEN = "#53fc18", PURPLE = "#9146ff";
+    const COLORS = [GREEN, PURPLE, "#7dff4a", "#b07dff"];
+    const COUNT = FX === "high" ? 85 : FX === "low" ? 28 : 40;
+    const LINK_DIST = 120;
+
+    let W = 0, H = 0, DPR = 1;
+    let dots = [];
+    let bursts = [];
+    let running = false;
+    let rafId = null;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = hero.offsetWidth;
+      H = hero.offsetHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function seed() {
+      dots = [];
+      for (let i = 0; i < COUNT; i++) {
+        dots.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          r: 1 + Math.random() * 2.2,
+          c: COLORS[(Math.random() * COLORS.length) | 0],
+          ph: Math.random() * Math.PI * 2,
+          sp: 0.008 + Math.random() * 0.02
+        });
+      }
+    }
+
+    function rgba(hex, a) {
+      const n = parseInt(hex.slice(1), 16);
+      return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")";
+    }
+
+    function drawDot(d, alpha) {
+      /* soft outer halo + hot core = cheap neon */
+      ctx.fillStyle = rgba(d.c, alpha * 0.16);
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r * 3.4, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = rgba(d.c, alpha);
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, 6.2832);
+      ctx.fill();
+    }
+
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+
+      /* links first (skipped on low) */
+      if (FX === "high") {
+        for (let i = 0; i < dots.length; i++) {
+          for (let j = i + 1; j < dots.length; j++) {
+            const dx = dots[i].x - dots[j].x;
+            const dy = dots[i].y - dots[j].y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < LINK_DIST * LINK_DIST) {
+              const a = (1 - Math.sqrt(d2) / LINK_DIST) * 0.14;
+              ctx.strokeStyle = rgba(dots[i].c, a);
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(dots[i].x, dots[i].y);
+              ctx.lineTo(dots[j].x, dots[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      for (let i = 0; i < dots.length; i++) {
+        const d = dots[i];
+        d.x += d.vx; d.y += d.vy; d.ph += d.sp;
+        if (d.x < -12) d.x = W + 12; else if (d.x > W + 12) d.x = -12;
+        if (d.y < -12) d.y = H + 12; else if (d.y > H + 12) d.y = -12;
+        drawDot(d, 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(d.ph)));
+      }
+
+      /* bursts */
+      for (let i = bursts.length - 1; i >= 0; i--) {
+        const p = bursts[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vx *= 0.96; p.vy = p.vy * 0.96 + 0.05;
+        p.life -= 0.022;
+        if (p.life <= 0) { bursts.splice(i, 1); continue; }
+        drawDot(p, p.life);
+      }
+
+      rafId = running ? requestAnimationFrame(frame) : null;
+    }
+
+    function start() {
+      if (running || FX === "off") return;
+      running = true;
+      rafId = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    function spawnBurst(x, y) {
+      if (FX !== "high") return;
+      for (let i = 0; i < 26; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const sp = 1.5 + Math.random() * 4.5;
+        bursts.push({
+          x: x, y: y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          r: 1 + Math.random() * 2.4,
+          c: Math.random() < 0.5 ? GREEN : PURPLE,
+          life: 0.9 + Math.random() * 0.3
+        });
+      }
+    }
+
+    resize();
+    seed();
+
+    if (FX === "off") {
+      /* single static frame so the hero still has texture */
+      dots.forEach(function (d) { drawDot(d, 0.5); });
+    } else {
+      /* run only while the hero is on screen and the tab is visible */
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (entries) {
+          entries[0].isIntersecting ? start() : stop();
+        }, { threshold: 0.02 }).observe(hero);
+      } else {
+        start();
+      }
+      document.addEventListener("visibilitychange", function () {
+        document.hidden ? stop() : start();
+      });
+
+      /* click anywhere in the hero = burst */
+      hero.addEventListener("click", function (e) {
+        const r = hero.getBoundingClientRect();
+        spawnBurst(e.clientX - r.left, e.clientY - r.top);
+      });
+
+      /* ambient bursts, occasionally, high fx only */
+      if (FX === "high") {
+        setInterval(function () {
+          if (running && Math.random() < 0.65) {
+            spawnBurst(Math.random() * W, Math.random() * H * 0.8);
+          }
+        }, 7000);
+      }
+    }
+
+    let rT = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(rT);
+      rT = setTimeout(function () { resize(); seed(); if (FX === "off") dots.forEach(function (d) { drawDot(d, 0.5); }); }, 150);
+    });
+  })();
+
+  /* ==========================================================
+     Hero mock overlay feed — the product demoing itself
+     ========================================================== */
+  (function demoFeed() {
+    const feed = document.getElementById("demo-feed");
+    if (!feed) return;
+    const GREEN = "#53fc18", PURPLE = "#b07dff", WHITE = "#e2e8f0";
+    const EVENTS = [
+      { agent: "clipper",   icon: "✂️",  title: "Clipped the last 30s — posting to Shorts", c: GREEN },
+      { agent: "scout",     icon: "🔭", title: "Found 3 trending topics in your niche", c: PURPLE },
+      { agent: "shipper",   icon: "🚀", title: "v1.4.2 built, signed + notarized", c: GREEN },
+      { agent: "analyst",   icon: "📈", title: "Tracked +$142 across engines this week", c: PURPLE },
+      { agent: "copywriter",icon: "✍️",  title: "Draft ready: 5 title options for the VOD", c: WHITE },
+      { agent: "community", icon: "💬", title: "Replied to 12 comments overnight", c: GREEN },
+      { agent: "dealflow",  icon: "🤝", title: "2 sponsor leads queued for review", c: PURPLE },
+      { agent: "designer",  icon: "🎨", title: "New thumbnail mock — approve?", c: WHITE }
+    ];
+    const MAX = 4;
+    let idx = 0;
+
+    function addCard() {
+      const ev = EVENTS[idx % EVENTS.length];
+      idx++;
+      const el = document.createElement("div");
+      el.className = "dcard";
+      el.style.setProperty("--ac", ev.c);
+      el.innerHTML =
+        '<div class="ic">' + ev.icon + "</div>" +
+        '<div><div class="ag">' + ev.agent + '</div><div class="tt">' + ev.title + "</div></div>";
+      feed.appendChild(el);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { el.classList.add("in"); });
+      });
+      const live = feed.querySelectorAll(".dcard:not(.out)");
+      if (live.length > MAX) {
+        const old = live[0];
+        old.classList.add("out");
+        setTimeout(function () { if (old.parentNode) old.parentNode.removeChild(old); }, 340);
+      }
+    }
+
+    if (FX === "off") {
+      for (let i = 0; i < MAX; i++) addCard();
+      feed.querySelectorAll(".dcard").forEach(function (el) { el.classList.add("in"); });
+      return;
+    }
+    for (let i = 0; i < 2; i++) addCard();
+    setInterval(function () { if (!document.hidden) addCard(); }, 2600);
+  })();
+
+  /* ==========================================================
+     DOM particle burst (waitlist success + primary CTA)
+     ========================================================== */
+  function domBurst(x, y) {
+    if (FX !== "high") return;
+    const COLORS = ["#53fc18", "#9146ff", "#7dff4a", "#b07dff", "#f4f6ff"];
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement("span");
+      s.className = "pbit";
+      s.style.left = x + "px";
+      s.style.top = y + "px";
+      s.style.background = COLORS[i % COLORS.length];
+      s.style.boxShadow = "0 0 8px " + COLORS[i % COLORS.length];
+      document.body.appendChild(s);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 90;
+      if (s.animate) {
+        s.animate([
+          { transform: "translate(0,0) scale(1)", opacity: 1 },
+          { transform: "translate(" + Math.cos(ang) * dist + "px," + (Math.sin(ang) * dist - 20) + "px) scale(.2)", opacity: 0 }
+        ], { duration: 620 + Math.random() * 300, easing: "cubic-bezier(.21,.9,.35,1)" }).onfinish = function () { s.remove(); };
+      } else {
+        s.remove();
+      }
+    }
+  }
+
+  /* ==========================================================
+     WAITLIST ENDPOINT  ——  the ONE line to flip for permanent signups.
+     ----------------------------------------------------------
+     Leave this "" (empty) → the form uses the zero-backend MAILTO
+     fallback below: on submit it opens the visitor's mail client with
+     a prefilled email to ladonte@ladonteprince.com (subject
+     "Rackhouse waitlist", body carries the entered address) so signups
+     still land in a real inbox with ZERO accounts and ZERO external
+     network requests (fully self-contained / CSP-safe).
+
+     Go permanent by pasting ONE POST URL from any form backend that
+     accepts JSON — Formspree, Whop, Tally, etc. — e.g.:
+         const WAITLIST_ENDPOINT = "https://formspree.io/f/abcdwxyz";
+     When non-empty the handler fetch-POSTs { email, source } as JSON to
+     that URL and shows success/failure. No other code changes needed.
+     ========================================================== */
+  const WAITLIST_ENDPOINT = "";
+
+  /* ==========================================================
+     Waitlist form handler
+       • WAITLIST_ENDPOINT set   → POST the email as JSON, show ok/err
+       • WAITLIST_ENDPOINT empty → mailto fallback (zero backend)
+     ========================================================== */
+  (function waitlist() {
+    const form = document.getElementById("wl-form");
+    const email = document.getElementById("wl-email");
+    const btn = document.getElementById("wl-btn");
+    const status = document.getElementById("wl-status");
+    if (!form) return;
+
+    const SOURCE = PRODUCT_NAME.toLowerCase().replace(/\s+/g, "-") + "-landing";
+    const btnSpan = btn.querySelector("span");
+
+    function celebrate() {
+      status.textContent = "You're on the list — check your inbox. 🔥";
+      status.className = "wl-status ok";
+      btnSpan.textContent = "You're in";
+      form.reset();
+      const r = btn.getBoundingClientRect();
+      domBurst(r.left + r.width / 2, r.top + r.height / 2);
+    }
+
+    function fail(msg) {
+      status.textContent = msg;
+      status.className = "wl-status err";
+      btn.disabled = false;
+      btnSpan.textContent = "Lock me in";
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const val = (email.value || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
+        status.textContent = "That email looks sus — check it and run it back.";
+        status.className = "wl-status err";
+        return;
+      }
+      btn.disabled = true;
+      btnSpan.textContent = "Locking in…";
+      status.textContent = "";
+      status.className = "wl-status";
+
+      /* -------- PERMANENT path: POST to the configured endpoint -------- */
+      if (WAITLIST_ENDPOINT) {
+        fetch(WAITLIST_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ email: val, source: SOURCE })
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("bad status " + res.status);
+            celebrate();
+          })
+          .catch(function () {
+            fail("Couldn't reach the list — give it another shot in a sec.");
+          });
+        return;
+      }
+
+      /* -------- INTERIM path: zero-backend mailto capture --------
+         Opens the visitor's mail client with everything prefilled and
+         addressed to the founder. No external request, nothing to host. */
+      const subject = encodeURIComponent(PRODUCT_NAME + " waitlist");
+      const body = encodeURIComponent(
+        "Add me to the " + PRODUCT_NAME + " waitlist.\n\n" +
+        "Email: " + val + "\n\n" +
+        "Sent from the " + SOURCE + " page."
+      );
+      window.location.href =
+        "mailto:ladonte@ladonteprince.com?subject=" + subject + "&body=" + body;
+      celebrate();
+    });
+  })();
+
+  /* burst on the hero CTA click too */
+  (function ctaBurst() {
+    const cta = document.getElementById("hero-cta");
+    if (!cta) return;
+    cta.addEventListener("click", function (e) {
+      domBurst(e.clientX, e.clientY);
+    });
+  })();
+})();
+</script>
+</body>
+</html>
